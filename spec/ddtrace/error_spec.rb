@@ -118,7 +118,10 @@ RSpec.describe Datadog::Error do
             end
           end
 
-          it 'reports errors only once', if: (RUBY_VERSION < '2.6.0' || PlatformHelpers.truffleruby?) do
+          # Neither TruffleRuby nor JRuby have added the "circular causes" validation, we still expect the pre-2.6
+          # behavior from them.
+          # Upstream ticket for JRuby: https://github.com/jruby/jruby/issues/7035
+          it 'reports errors only once', if: (RUBY_VERSION < '2.6.0' || !PlatformHelpers.mri?) do
             expect(error.type).to eq('RuntimeError')
             expect(error.message).to eq('first error')
 
@@ -128,7 +131,7 @@ RSpec.describe Datadog::Error do
             expect(error.backtrace.each_line.reject { |l| l.start_with?("\tfrom") }).to have(2).items
           end
 
-          it 'reports errors only once', if: (RUBY_VERSION >= '2.6.0' && !PlatformHelpers.truffleruby?) do
+          it 'reports errors only once', if: (RUBY_VERSION >= '2.6.0' && PlatformHelpers.mri?) do
             expect(error.type).to eq('ArgumentError')
             expect(error.message).to eq('circular causes')
 
